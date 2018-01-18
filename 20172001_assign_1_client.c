@@ -20,35 +20,39 @@ void catcherror(char *message)
 
 char* integerToBinary(int a)
 {
-    char*binaryNumber;
+    char* binaryNumber;
     int sizeOfNumber=((int)(floor(log(a)/log(2.0)))+1);
     binaryNumber=(char*)malloc(sizeOfNumber);
     int index=sizeOfNumber;
     while(a!=0)
     {
-        printf("N%dN ",a%2);
         binaryNumber[index-1]=(a%2)+'0';
         a=a/2;
         index--;
     }
-    return (char*)binaryNumber;
+    return binaryNumber;
 }
 
-void fastExponentiationAlgo(int base, int exp, int prime)
+int fastExponentiationAlgo(int base, int exp, int prime)
 {
-    int y;
-    y=base;
-    printf("Base %s\n",integerToBinary(base));
-    printf("Exp %s\n",integerToBinary(exp));
-    printf("Prime %s\n",integerToBinary(prime));
-    return;
+    int answer;
+    answer=base;
+    char* expinbinary;
+    int sizeOfExp=((int)(floor(log(exp)/log(2.0)))+1);
+    for(int i=sizeOfExp-2;i>=0;i--)
+    {
+        answer=(answer*answer)%prime;
+        if((exp>>i)%2==1)
+            answer=(answer*base)%prime;
+    }
+    return answer;
 
 }
 
 
 int main(int argc, char **argv)
 {
-    fastExponentiationAlgo(2,10,29);
+    printf("%d\n",fastExponentiationAlgo(45,99,29));
 
     struct sockaddr_in serveraddress;/*structure is to store addresses
                                         struct sockaddr_in
