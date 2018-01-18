@@ -1,3 +1,4 @@
+#define _GNU_SOURCE //for fcloseall
 #include <stdio.h>//for fileno
 #include <stdlib.h>
 #include <unistd.h>//for read
@@ -54,5 +55,11 @@ int main(int argc, char **argv)
     acceptfd=accept(socketfd,(struct sockaddr *)&clientaddress,&clientlen);//blocks the process until a client connects to server.Wakes up when connection from client is done
     if(acceptfd<0)
         catcherror("Error in Accept");
-    else printf("Connectediii");
+    else
+    {
+        char buffmsg[20];
+        recv(acceptfd,buffmsg,20,0);
+        printf("Received Message : %s\n",buffmsg);
+    }
+    fcloseall();
 }

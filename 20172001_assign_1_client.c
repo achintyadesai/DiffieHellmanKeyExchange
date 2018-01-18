@@ -1,3 +1,4 @@
+#define _GNU_SOURCE //for fcloseall
 #include <unistd.h>//for read
 #include <sys/socket.h>//sockets
 #include <sys/types.h>//sockets
@@ -6,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
 
 //CLIENT CODE
 
@@ -15,8 +18,38 @@ void catcherror(char *message)
     exit(1);
 }
 
+char* integerToBinary(int a)
+{
+    char*binaryNumber;
+    int sizeOfNumber=((int)(floor(log(a)/log(2.0)))+1);
+    binaryNumber=(char*)malloc(sizeOfNumber);
+    int index=sizeOfNumber;
+    while(a!=0)
+    {
+        printf("N%dN ",a%2);
+        binaryNumber[index-1]=(a%2)+'0';
+        a=a/2;
+        index--;
+    }
+    return (char*)binaryNumber;
+}
+
+void fastExponentiationAlgo(int base, int exp, int prime)
+{
+    int y;
+    y=base;
+    printf("Base %s\n",integerToBinary(base));
+    printf("Exp %s\n",integerToBinary(exp));
+    printf("Prime %s\n",integerToBinary(prime));
+    return;
+
+}
+
+
 int main(int argc, char **argv)
 {
+    fastExponentiationAlgo(2,10,29);
+
     struct sockaddr_in serveraddress;/*structure is to store addresses
                                         struct sockaddr_in
                                         { short   sin_family;
@@ -60,5 +93,10 @@ int main(int argc, char **argv)
     int connectifd=connect(socketfd,(struct sockaddr *)&serveraddress,serverlen);//connects to server
     if(connectifd<0)
         catcherror("Error in Connecting");
-    else printf("Connected!!!!");
+    else
+    {
+        send(socketfd,"Hello Server",20,0);
+
+    }
+    fcloseall();
 }
