@@ -8,8 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-
+#include <limits.h>
 //CLIENT CODE
 
 void catcherror(char *message)
@@ -21,39 +20,102 @@ void catcherror(char *message)
 char* integerToBinary(int a)
 {
     char* binaryNumber;
-    int sizeOfNumber=((int)(floor(log(a)/log(2.0)))+1);
-    binaryNumber=(char*)malloc(sizeOfNumber);
-    int index=sizeOfNumber;
+    int sizeOfNumber = ((int)(floor(log(a)/log(2.0)))+1);
+    binaryNumber = (char*)malloc(sizeOfNumber);
+    int index = sizeOfNumber;
     while(a!=0)
     {
-        binaryNumber[index-1]=(a%2)+'0';
-        a=a/2;
+        binaryNumber[index-1] = (a%2)+'0';
+        a = a/2;
         index--;
     }
     return binaryNumber;
 }
 
-int fastExponentiationAlgo(int base, int exp, int prime)
+unsigned long long fastExponentiationAlgo(unsigned long long base, unsigned long long exp, unsigned long long prime)
 {
-    int answer;
-    answer=base;
-    char* expinbinary;
+    unsigned long long answer=base;
     int sizeOfExp=((int)(floor(log(exp)/log(2.0)))+1);
-    for(int i=sizeOfExp-2;i>=0;i--)
+    for(int i = sizeOfExp-2;i>=0;i--)
     {
-        answer=(answer*answer)%prime;
+        answer = (answer*answer)%prime;
         if((exp>>i)%2==1)
-            answer=(answer*base)%prime;
+            answer = (answer*base)%prime;
     }
     return answer;
 
 }
 
+void  setSeedFromCpuUtil()
+{
+    FILE *statptr;
+    unsigned long long statArray[4];
+    statptr=fopen("/proc/stat","r");
+    char noUse[10];
+    fscanf(statptr,"%s %llu %llu %llu %llu",noUse,&statArray[0],&statArray[1],&statArray[2],&statArray[3]);
+    unsigned long long finalrandomnumber = (statArray[0]+statArray[1]+statArray[2]+statArray[3])/3;
+    srand(finalrandomnumber%13121);
+    fclose(statptr);
+    //printf("%d\n",(int)(finalrandomnumber%13121));
+    //Now rand can be used
+}
+
+
+int millerRabinPrimality(unsigned long long number,unsigned long long q,unsigned long long k)
+{
+    unsigned long long base = rand();
+    base = base % number-1;
+    if(base==0)
+        base=2;
+    if(fastExponentiationAlgo(base,q,number)==1)
+        return -1;//inconclusive
+
+    for(unsigned long long j = 0;j<k;j++)
+        if(fastExponentiationAlgo(base,(1<<j)*q,number)==number-1)
+    {
+            return -1;
+    }
+    return 0;
+}
+
 
 int main(int argc, char **argv)
 {
-    printf("%d\n",fastExponentiationAlgo(45,99,29));
+    setSeedFromCpuUtil();
+    printf("%llu\n",fastExponentiationAlgo(5,7,11));
+    int flag;
+    do
+    {
+        flag=0;
+        unsigned long long number = rand();
+        if(number%2==0)
+        {
+            flag=1;
+            continue;
+        }
+        unsigned long long k;
+        unsigned long long q;
+        printf("Number is %llu",number);
+        for(k=1;k<=(int)(floor(log(number-1)/log(2.0)));k++)
+        {
+            if((number-1)%(1<<k)==0)
+            {
+                q=(number-1)/(1<<k);
+                if(q%2==1)
+                    break;
+            }
+        }
 
+        printf("Atlast found a q and k %llu %llu",q,k);
+
+        for(int i=0;i<10;i++)
+            if(millerRabinPrimality(number,q,k)==0)
+                flag=1;
+        if(flag==0)
+                printf("Prime with high probability");
+        else    printf("Not Prime");
+    }while(flag==1);
+    printf("\nPrime Found");
     struct sockaddr_in serveraddress;/*structure is to store addresses
                                         struct sockaddr_in
                                         { short   sin_family;
