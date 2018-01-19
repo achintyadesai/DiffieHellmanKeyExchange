@@ -11,6 +11,11 @@
 #include <limits.h>
 //CLIENT CODE
 
+typedef struct{
+    unsigned long long primenumber;
+    unsigned long long primitiveroot;
+}globalPublicElements;
+
 void catcherror(char *message)
 {
     printf("%s\n",message);
@@ -30,6 +35,80 @@ char* integerToBinary(int a)
         index--;
     }
     return binaryNumber;
+}
+
+int encodedValue(char c)
+{
+    switch(c)
+    {
+        case ' ' :  return 0;
+        case 'A' :  return 1;
+        case 'B' :  return 2;
+        case 'C' :  return 3;
+        case 'D' :  return 4;
+        case 'E' :  return 5;
+        case 'F' :  return 6;
+        case 'G' :  return 7;
+        case 'H' :  return 8;
+        case 'I' :  return 9;
+        case 'J' :  return 10;
+        case 'K' :  return 11;
+        case 'L' :  return 12;
+        case 'M' :  return 13;
+        case 'N' :  return 14;
+        case 'O' :  return 15;
+        case 'P' :  return 16;
+        case 'Q' :  return 17;
+        case 'R' :  return 18;
+        case 'S' :  return 19;
+        case 'T' :  return 20;
+        case 'U' :  return 21;
+        case 'V' :  return 22;
+        case 'W' :  return 23;
+        case 'X' :  return 24;
+        case 'Y' :  return 25;
+        case 'Z' :  return 26;
+        case ',' :  return 27;
+        case '.' :  return 28;
+        case '?' :  return 29;
+        case '0' :  return 30;
+        case '1' :  return 31;
+        case '2' :  return 32;
+        case '3' :  return 33;
+        case '4' :  return 34;
+        case '5' :  return 35;
+        case '6' :  return 36;
+        case '7' :  return 37;
+        case '8' :  return 38;
+        case '9' :  return 39;
+        case 'a' :  return 40;
+        case 'b' :  return 41;
+        case 'c' :  return 42;
+        case 'd' :  return 43;
+        case 'e' :  return 44;
+        case 'f' :  return 45;
+        case 'g' :  return 46;
+        case 'h' :  return 47;
+        case 'i' :  return 48;
+        case 'j' :  return 49;
+        case 'k' :  return 50;
+        case 'l' :  return 51;
+        case 'm' :  return 52;
+        case 'n' :  return 53;
+        case 'o' :  return 54;
+        case 'p' :  return 55;
+        case 'q' :  return 56;
+        case 'r' :  return 57;
+        case 's' :  return 58;
+        case 't' :  return 59;
+        case 'u' :  return 60;
+        case 'v' :  return 61;
+        case 'w' :  return 62;
+        case 'x' :  return 63;
+        case 'y' :  return 64;
+        case 'z' :  return 65;
+        case '!' :  return 66;
+    }
 }
 
 unsigned long long fastExponentiationAlgo(unsigned long long base, unsigned long long exp, unsigned long long prime)
@@ -158,7 +237,7 @@ int main(int argc, char **argv)
     unsigned long long primitiveroot;
 
     unsigned long long *primefactors;
-    primefactors = calloc((unsigned int)totientvalue,0);
+    primefactors = malloc((unsigned int)totientvalue);
     int numberofdistinctprimefactors = primeFactorization(totientvalue,primefactors);
     for(int i=0;i<numberofdistinctprimefactors;i++)
     {
@@ -187,7 +266,12 @@ int main(int argc, char **argv)
     }
     printf("Primitive root found:%llu",primitiveroot);
 
+    globalPublicElements gpe;
+    gpe.primenumber=primenumber;
+    gpe.primitiveroot=primitiveroot;
 
+    char gpestring[100];
+    sprintf(gpestring,"%llu:%llu",gpe.primenumber,gpe.primitiveroot);
     struct sockaddr_in serveraddress;/*structure is to store addresses
                                         struct sockaddr_in
                                         { short   sin_family;
@@ -233,8 +317,30 @@ int main(int argc, char **argv)
         catcherror("Error in Connecting");
     else
     {
-        send(socketfd,"Hello Server",20,0);
-
+        send(socketfd,gpestring,100,0);
+        char publickeyofserverstring[100];
+        recv(socketfd,publickeyofserverstring,100,0);
+        unsigned long long publickeyofserver,receivedprimenumber,receivedprimitiveroot;
+        sscanf(publickeyofserverstring,"%llu:%llu:%llu",&publickeyofserver,&receivedprimenumber,&receivedprimitiveroot);
+        if(receivedprimenumber==gpe.primenumber && receivedprimitiveroot==gpe.primitiveroot)
+        {
+            printf("Public key of Server %llu\n",publickeyofserver);
+            unsigned long long privatekey = rand()%gpe.primenumber;
+            unsigned long long publickey = fastExponentiationAlgo(gpe.primitiveroot,privatekey,gpe.primenumber);
+            char publickeystring[100];
+            sprintf(publickeystring,"%llu",publickey);
+            send(socketfd,publickeystring,100,0);
+            printf("My Private key %llu\n",privatekey);
+            printf("My Public key %llu\n",publickey);
+            unsigned long long secretsharedkey = fastExponentiationAlgo(publickeyofserver,privatekey,gpe.primenumber);
+            printf("Secret Shared Key is %llu\n",secretsharedkey);
+            secretsharedkey = secretsharedkey%66;
+        }
+        else
+        {
+            catcherror("Error in Communication");
+        }
     }
     fcloseall();
+    free(primefactors);
 }
