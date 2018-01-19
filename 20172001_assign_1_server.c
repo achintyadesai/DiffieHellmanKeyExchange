@@ -5,6 +5,7 @@
 #include <sys/socket.h>//sockets
 #include <sys/types.h>//sockets
 #include <netinet/in.h>//for socket structure
+#include <netinet/tcp.h>//for nagle
 #include <sys/sendfile.h>//for sendfile
 #include <string.h>
 #include <math.h>
@@ -95,6 +96,80 @@ int encodedValue(char c)
     }
 }
 
+char encodedChar(int c)
+{
+    switch(c)
+    {
+        case 0 : return ' ';
+        case 1 : return 'A';
+        case 2 : return 'B';
+        case 3 : return 'C';
+        case 4 : return 'D';
+        case 5 : return 'E';
+        case 6 : return 'F';
+        case 7 : return 'G';
+        case 8 : return 'H';
+        case 9 : return 'I';
+        case 10 : return 'J';
+        case 11 : return 'K';
+        case 12 : return 'L';
+        case 13 : return 'M';
+        case 14 : return 'N';
+        case 15 : return 'O';
+        case 16 : return 'P';
+        case 17 : return 'Q';
+        case 18 : return 'R';
+        case 19 : return 'S';
+        case 20 : return 'T';
+        case 21 : return 'U';
+        case 22 : return 'V';
+        case 23 : return 'W';
+        case 24 : return 'X';
+        case 25 : return 'Y';
+        case 26 : return 'Z';
+        case 27 : return ',';
+        case 28 : return '.';
+        case 29 : return '?';
+        case 30 : return '0';
+        case 31 : return '1';
+        case 32 : return '2';
+        case 33 : return '3';
+        case 34 : return '4';
+        case 35 : return '5';
+        case 36 : return '6';
+        case 37 : return '7';
+        case 38 : return '8';
+        case 39 : return '9';
+        case 40 : return 'a';
+        case 41 : return 'b';
+        case 42 : return 'c';
+        case 43 : return 'd';
+        case 44 : return 'e';
+        case 45 : return 'f';
+        case 46 : return 'g';
+        case 47 : return 'h';
+        case 48 : return 'i';
+        case 49 : return 'j';
+        case 50 : return 'k';
+        case 51 : return 'l';
+        case 52 : return 'm';
+        case 53 : return 'n';
+        case 54 : return 'o';
+        case 55 : return 'p';
+        case 56 : return 'q';
+        case 57 : return 'r';
+        case 58 : return 's';
+        case 59 : return 't';
+        case 60 : return 'u';
+        case 61 : return 'v';
+        case 62 : return 'w';
+        case 63 : return 'x';
+        case 64 : return 'y';
+        case 65 : return 'z';
+        case 66 : return '!';
+    }
+}
+
 
 unsigned long long fastExponentiationAlgo(unsigned long long base, unsigned long long exp, unsigned long long prime)
 {
@@ -139,6 +214,9 @@ int main(int argc, char **argv)
         catcherror("Port Not Provided");
 
     socketfd=socket(AF_INET,SOCK_STREAM,0);//AF_INET is address domain(for any host on internet) AF_UNIX(for 2 processes sharing common file system) search man for other 2 parameters
+    int socketclosure = 1;
+    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &socketclosure, sizeof(socketclosure)); //for socket closure like nagle
+
 
     if(socketfd<0)
         catcherror("Socket cannot be created");
@@ -166,6 +244,10 @@ int main(int argc, char **argv)
         catcherror("Error in Accept");
     else
     {
+        int nagle=1;
+        setsockopt(acceptfd,IPPROTO_TCP,TCP_NODELAY,(char *) &nagle,sizeof(int));
+
+
         globalPublicElements gpe;
         char buffmsg[100];
         recv(acceptfd,buffmsg,100,0);
@@ -188,6 +270,33 @@ int main(int argc, char **argv)
         unsigned long long secretsharedkey = fastExponentiationAlgo(publickeyofclient,privatekey,gpe.primenumber);
         printf("Secret Shared Key is %llu\n",secretsharedkey);
         secretsharedkey = secretsharedkey%67;
+        if(secretsharedkey==0)
+                secretsharedkey=1;
+
+        FILE *writeptr;
+        writeptr=fopen(argv[2],"w");
+        do
+        {
+            char receivedmsg[BUFSIZ];
+            recv(acceptfd,receivedmsg,BUFSIZ,0);
+            int encryptedchar;
+            sscanf(receivedmsg,"%d",&encryptedchar);
+            printf("Received:%d\n",encryptedchar);
+            if(encryptedchar==-1)
+                break;
+            if(encryptedchar>=0 && encryptedchar<=67)
+            {
+                int decryptedchar=encryptedchar-secretsharedkey;
+                if(decryptedchar<0)
+                    decryptedchar=decryptedchar+67;
+                printf("Inserting:%d\n",decryptedchar);
+                fputc(encodedChar(decryptedchar),writeptr);
+            }
+
+        }while(1);
+
+        printf("Done!!");
+
     }
     fcloseall();
 }
