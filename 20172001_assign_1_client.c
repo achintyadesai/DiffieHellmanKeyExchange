@@ -78,16 +78,52 @@ int millerRabinPrimality(unsigned long long number,unsigned long long q,unsigned
     return 0;
 }
 
+int primeFactorization(unsigned long long no,unsigned long long primefactors[])
+{
+    int index=0;
+    if(no%2==0)
+    {
+        primefactors[index]=2;
+        index++;
+    }
+    while(no%2==0)
+    {
+        no=no/2;
+    }
+
+        printf("Inside\n");
+    for(int i=3;i<=sqrt(no);i++)
+    {
+        if(no%i==0)
+        {
+            primefactors[index]=i;
+            index++;
+        }
+        while(no%i==0)
+        {
+            no=no/i;
+        }
+
+    }
+    if(no>2)
+    {
+        primefactors[index]=no;
+        index++;
+    }
+
+    return index;
+}
 
 int main(int argc, char **argv)
 {
     setSeedFromCpuUtil();
     printf("%llu\n",fastExponentiationAlgo(5,7,11));
+    unsigned long long number,primenumber;
     int flag;
     do
     {
         flag=0;
-        unsigned long long number = rand();
+        number = rand();
         if(number%2==0)
         {
             flag=1;
@@ -115,7 +151,43 @@ int main(int argc, char **argv)
                 printf("Prime with high probability");
         else    printf("Not Prime");
     }while(flag==1);
-    printf("\nPrime Found");
+    printf("\nPrime Found %llu\n",number);
+
+    primenumber=number;
+    unsigned long long totientvalue = primenumber-1;
+    unsigned long long primitiveroot;
+
+    unsigned long long *primefactors;
+    primefactors = calloc((unsigned int)totientvalue,0);
+    int numberofdistinctprimefactors = primeFactorization(totientvalue,primefactors);
+    for(int i=0;i<numberofdistinctprimefactors;i++)
+    {
+        primefactors[i]=totientvalue/primefactors[i];
+    }
+
+    for(primitiveroot=2;primitiveroot<totientvalue;primitiveroot++)
+    {
+        flag=0;
+
+        for(unsigned long long j=0;j<numberofdistinctprimefactors;j++)
+        {
+            if(fastExponentiationAlgo(primitiveroot,primefactors[j],primenumber)==1)
+            {
+                flag=1;
+                break;
+            }
+
+        }
+        if(flag==1)
+            continue;
+        else
+        {
+            break;
+        }
+    }
+    printf("Primitive root found:%llu",primitiveroot);
+
+
     struct sockaddr_in serveraddress;/*structure is to store addresses
                                         struct sockaddr_in
                                         { short   sin_family;
