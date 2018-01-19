@@ -416,12 +416,20 @@ int main(int argc, char **argv)
 
             FILE* readptr;
             readptr=fopen(argv[3],"rt");
-            int unencrpytedchar;
-            while((unencrpytedchar=fgetc(readptr))!=EOF)
+            int unencryptedchar;
+            while((unencryptedchar=fgetc(readptr))!=EOF)
             {
-                printf("Unencrypted char:%d\n",unencrpytedchar);
-                int encryptedcharacter=(encodedValue(unencrpytedchar)+secretsharedkey)%67;
-                char sendcharstring[BUFSIZ];
+                printf("Unencrypted char:%d\n",unencryptedchar);
+		int encryptedcharacter;		
+		if(unencryptedchar!='\n')
+		{			
+                	encryptedcharacter=(encodedValue(unencryptedchar)+secretsharedkey)%67;
+                }
+		else
+		{
+			encryptedcharacter=-2;
+		}
+		char sendcharstring[BUFSIZ];
                 sprintf(sendcharstring,"%d",encryptedcharacter);
                 send(socketfd,sendcharstring,BUFSIZ,0);
             }

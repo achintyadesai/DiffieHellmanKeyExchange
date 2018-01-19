@@ -284,7 +284,9 @@ int main(int argc, char **argv)
             printf("Received:%d\n",encryptedchar);
             if(encryptedchar==-1)
                 break;
-            if(encryptedchar>=0 && encryptedchar<=67)
+            if(encryptedchar==-2)
+		fputc('\n',writeptr);
+	    if(encryptedchar>=0 && encryptedchar<=67)
             {
                 int decryptedchar=encryptedchar-secretsharedkey;
                 if(decryptedchar<0)
