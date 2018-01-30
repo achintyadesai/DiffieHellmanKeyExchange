@@ -286,12 +286,14 @@ int main(int argc, char **argv)
                 break;
             if(encryptedchar==-2)
 		fputc('\n',writeptr);
+	    if(encryptedchar==-3)
+		fputc('\r',writeptr);
 	    if(encryptedchar>=0 && encryptedchar<=67)
             {
                 int decryptedchar=encryptedchar-secretsharedkey;
                 if(decryptedchar<0)
                     decryptedchar=decryptedchar+67;
-                printf("Inserting:%d\n",decryptedchar);
+                printf("Inserting:%c\n",encodedChar(decryptedchar));
                 fputc(encodedChar(decryptedchar),writeptr);
             }
 

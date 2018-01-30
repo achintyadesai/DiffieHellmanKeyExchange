@@ -420,18 +420,24 @@ int main(int argc, char **argv)
             while((unencryptedchar=fgetc(readptr))!=EOF)
             {
                 printf("Unencrypted char:%d\n",unencryptedchar);
-		int encryptedcharacter;		
-		if(unencryptedchar!='\n')
+		int encryptedcharacter;	
+		if(unencryptedchar!='\n' && unencryptedchar!='\r')
 		{			
                 	encryptedcharacter=(encodedValue(unencryptedchar)+secretsharedkey)%67;
                 }
-		else
+		else if(unencryptedchar=='\n')
 		{
 			encryptedcharacter=-2;
+		}
+		else if(unencryptedchar=='\r')
+		{
+			encryptedcharacter=-3;
+			continue;
 		}
 		char sendcharstring[BUFSIZ];
                 sprintf(sendcharstring,"%d",encryptedcharacter);
                 send(socketfd,sendcharstring,BUFSIZ,0);
+                printf("Sending char:%d\n",encryptedcharacter);
             }
             char sendcharstring[BUFSIZ];
             sprintf(sendcharstring,"%d",-1);
